@@ -11,11 +11,11 @@ import (
 	"time"
 )
 
-// Parse parses an object i and fills a url.Values object. The isEC2 flag
+// Encode encodes an object i into a url.Values object. The isEC2 flag
 // indicates if this is the EC2 Query sub-protocol.
-func Parse(body url.Values, i interface{}, isEC2 bool) error {
-	q := queryParser{isEC2: isEC2}
-	return q.parseValue(body, reflect.ValueOf(i), "", "")
+func Encode(body url.Values, i interface{}, isEC2 bool) error {
+	q := queryEncoder{isEC2: isEC2}
+	return q.encodeValue(body, reflect.ValueOf(i), "", "")
 }
 
 func elemOf(value reflect.Value) reflect.Value {
@@ -25,11 +25,11 @@ func elemOf(value reflect.Value) reflect.Value {
 	return value
 }
 
-type queryParser struct {
+type queryEncoder struct {
 	isEC2 bool
 }
 
-func (q *queryParser) parseValue(v url.Values, value reflect.Value, prefix string, tag reflect.StructTag) error {
+func (q *queryEncoder) encodeValue(v url.Values, value reflect.Value, prefix string, tag reflect.StructTag) error {
 	value = elemOf(value)
 
 	// no need to handle zero values
@@ -51,17 +51,17 @@ func (q *queryParser) parseValue(v url.Values, value reflect.Value, prefix strin
 
 	switch t {
 	case "structure":
-		return q.parseStruct(v, value, prefix)
+		return q.encodeStruct(v, value, prefix)
 	case "list":
-		return q.parseList(v, value, prefix, tag)
+		return q.encodeList(v, value, prefix, tag)
 	case "map":
-		return q.parseMap(v, value, prefix, tag)
+		return q.encodeMap(v, value, prefix, tag)
 	default:
-		return q.parseScalar(v, value, prefix, tag)
+		return q.encodeScalar(v, value, prefix, tag)
 	}
 }
 
-func (q *queryParser) parseStruct(v url.Values, value reflect.Value, prefix string) error {
+func (q *queryEncoder) encodeStruct(v url.Values, value reflect.Value, prefix string) error {
 	if !value.IsValid() {
 		return nil
 	}
@@ -97,14 +97,14 @@ func (q *queryParser) parseStruct(v url.Values, value reflect.Value, prefix stri
 			name = prefix + "." + name
 		}
 
-		if err := q.parseValue(v, elemValue, name, field.Tag); err != nil {
+		if err := q.encodeValue(v, elemValue, name, field.Tag); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (q *queryParser) parseList(v url.Values, value reflect.Value, prefix string, tag reflect.StructTag) error {
+func (q *queryEncoder) encodeList(v url.Values, value reflect.Value, prefix string, tag reflect.StructTag) error {
 	// If it's empty, generate an empty value
 	if !value.IsNil() && value.Len() == 0 {
 		v.Set(prefix, "")
@@ -123,14 +123,14 @@ func (q *queryParser) parseList(v url.Values, value reflect.Value, prefix string
 		} else {
 			slicePrefix = slicePrefix + "." + strconv.Itoa(i+1)
 		}
-		if err := q.parseValue(v, value.Index(i), slicePrefix, ""); err != nil {
+		if err := q.encodeValue(v, value.Index(i), slicePrefix, ""); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (q *queryParser) parseMap(v url.Values, value reflect.Value, prefix string, tag reflect.StructTag) error {
+func (q *queryEncoder) encodeMap(v url.Values, value reflect.Value, prefix string, tag reflect.StructTag) error {
 	// If it's empty, generate an empty value
 	if !value.IsNil() && value.Len() == 0 {
 		v.Set(prefix, "")
@@ -175,7 +175,7 @@ func (q *queryParser) parseMap(v url.Values, value reflect.Value, prefix string,
 			keyName = prefix + "." + strconv.Itoa(i+1) + "." + kname
 		}
 
-		if err := q.parseValue(v, mapKey, keyName, ""); err != nil {
+		if err := q.encodeValue(v, mapKey, keyName, ""); err != nil {
 			return err
 		}
 
@@ -187,7 +187,7 @@ func (q *queryParser) parseMap(v url.Values, value reflect.Value, prefix string,
 			valueName = prefix + "." + strconv.Itoa(i+1) + "." + vname
 		}
 
-		if err := q.parseValue(v, mapValue, valueName, ""); err != nil {
+		if err := q.encodeValue(v, mapValue, valueName, ""); err != nil {
 			return err
 		}
 	}
@@ -195,7 +195,7 @@ func (q *queryParser) parseMap(v url.Values, value reflect.Value, prefix string,
 	return nil
 }
 
-func (q *queryParser) parseScalar(v url.Values, r reflect.Value, name string, tag reflect.StructTag) error {
+func (q *queryEncoder) encodeScalar(v url.Values, r reflect.Value, name string, tag reflect.StructTag) error {
 	switch value := r.Interface().(type) {
 	case string:
 		v.Set(name, value)
