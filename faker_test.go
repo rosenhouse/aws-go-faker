@@ -52,14 +52,14 @@ var _ = Describe("Mocking out an AWS service over the network", func() {
 
 	var (
 		fakeBackend *FakeCloudFormationBackend
-		fake        *awsfaker.Fake
+		fakeHandler *awsfaker.FakeHandler
 		fakeServer  *httptest.Server
 	)
 
 	BeforeEach(func() {
 		fakeBackend = &FakeCloudFormationBackend{}
-		fake = awsfaker.New(fakeBackend)
-		fakeServer = httptest.NewServer(fake)
+		fakeHandler = awsfaker.New(fakeBackend)
+		fakeServer = httptest.NewServer(fakeHandler)
 	})
 	AfterEach(func() {
 		if fakeServer != nil {
@@ -172,6 +172,5 @@ var _ = Describe("Mocking out an AWS service over the network", func() {
 			Expect(awsErr.Code()).To(Equal("ValidationError"))
 			Expect(awsErr.Message()).To(Equal("some error message"))
 		})
-
 	})
 })

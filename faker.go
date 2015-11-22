@@ -13,12 +13,12 @@ import (
 	"github.com/rosenhouse/aws-go-faker/queryutil"
 )
 
-type Fake struct {
+type FakeHandler struct {
 	backend interface{}
 }
 
-func New(backend interface{}) *Fake {
-	return &Fake{backend}
+func New(backend interface{}) *FakeHandler {
+	return &FakeHandler{backend}
 }
 
 type ErrorResponse struct {
@@ -94,7 +94,7 @@ func constructInput(method reflect.Value, queryValues url.Values) (interface{}, 
 	return inputValue, nil
 }
 
-func (f *Fake) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (f *FakeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	queryValues, err := parseQueryRequest(r)
 	if err != nil {
 		panic(err)
