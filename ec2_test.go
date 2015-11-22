@@ -6,8 +6,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
 
 	"github.com/rosenhouse/awsfaker"
@@ -30,27 +28,20 @@ func (f *FakeEC2Backend) CreateKeyPair(input *ec2.CreateKeyPairInput) (*ec2.Crea
 }
 
 var _ = Describe("Mocking out the EC2 service", func() {
-	newClient := func(endpointBaseURL string) *ec2.EC2 {
-		credentials := credentials.NewStaticCredentials("some-access-key", "some-secret-key", "")
-		sdkConfig := &aws.Config{
-			Credentials: credentials,
-			Region:      aws.String("some-region"),
-			Endpoint:    aws.String(endpointBaseURL),
-		}
-		return ec2.New(session.New(sdkConfig))
-	}
-
 	var (
 		fakeBackend *FakeEC2Backend
 		fakeHandler *awsfaker.FakeHandler
 		fakeServer  *httptest.Server
+		client      *ec2.EC2
 	)
 
 	BeforeEach(func() {
 		fakeBackend = &FakeEC2Backend{}
 		fakeHandler = awsfaker.New(awsfaker.Backend{EC2: fakeBackend})
 		fakeServer = httptest.NewServer(fakeHandler)
+		client = ec2.New(newSession(fakeServer.URL))
 	})
+
 	AfterEach(func() {
 		if fakeServer != nil {
 			fakeServer.Close()
@@ -58,7 +49,7 @@ var _ = Describe("Mocking out the EC2 service", func() {
 	})
 
 	It("should call the backend method", func() {
-		newClient(fakeServer.URL).CreateKeyPair(
+		client.CreateKeyPair(
 			&ec2.CreateKeyPairInput{
 				KeyName: aws.String("some-key-name"),
 			})
@@ -75,7 +66,7 @@ var _ = Describe("Mocking out the EC2 service", func() {
 				KeyName:        aws.String("some-key-name"),
 			}
 
-			output, err := newClient(fakeServer.URL).CreateKeyPair(
+			output, err := client.CreateKeyPair(
 				&ec2.CreateKeyPairInput{
 					KeyName: aws.String("some-stack-name"),
 				})
@@ -97,7 +88,7 @@ var _ = Describe("Mocking out the EC2 service", func() {
 				HTTPStatusCode:  http.StatusBadRequest,
 			}
 
-			_, err := newClient(fakeServer.URL).CreateKeyPair(
+			_, err := client.CreateKeyPair(
 				&ec2.CreateKeyPairInput{
 					KeyName: aws.String("some-stack-name"),
 				})

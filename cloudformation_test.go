@@ -6,8 +6,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
 
 	"github.com/rosenhouse/awsfaker"
@@ -40,27 +38,20 @@ func (f *FakeCloudFormationBackend) DescribeStacks(input *cloudformation.Describ
 }
 
 var _ = Describe("Mocking out the CloudFormation service", func() {
-	newClient := func(endpointBaseURL string) *cloudformation.CloudFormation {
-		credentials := credentials.NewStaticCredentials("some-access-key", "some-secret-key", "")
-		sdkConfig := &aws.Config{
-			Credentials: credentials,
-			Region:      aws.String("some-region"),
-			Endpoint:    aws.String(endpointBaseURL),
-		}
-		return cloudformation.New(session.New(sdkConfig))
-	}
-
 	var (
 		fakeBackend *FakeCloudFormationBackend
 		fakeHandler *awsfaker.FakeHandler
 		fakeServer  *httptest.Server
+		client      *cloudformation.CloudFormation
 	)
 
 	BeforeEach(func() {
 		fakeBackend = &FakeCloudFormationBackend{}
 		fakeHandler = awsfaker.New(awsfaker.Backend{CloudFormation: fakeBackend})
 		fakeServer = httptest.NewServer(fakeHandler)
+		client = cloudformation.New(newSession(fakeServer.URL))
 	})
+
 	AfterEach(func() {
 		if fakeServer != nil {
 			fakeServer.Close()
@@ -68,7 +59,7 @@ var _ = Describe("Mocking out the CloudFormation service", func() {
 	})
 
 	It("should properly parse nested structs in the input", func() {
-		newClient(fakeServer.URL).UpdateStack(
+		client.UpdateStack(
 			&cloudformation.UpdateStackInput{
 				StackName: aws.String("some-stack-name"),
 				Parameters: []*cloudformation.Parameter{
@@ -100,7 +91,7 @@ var _ = Describe("Mocking out the CloudFormation service", func() {
 	})
 
 	It("should call the backend method", func() {
-		newClient(fakeServer.URL).DescribeStacks(
+		client.DescribeStacks(
 			&cloudformation.DescribeStacksInput{
 				StackName: aws.String("some-stack-name"),
 			})
@@ -128,7 +119,7 @@ var _ = Describe("Mocking out the CloudFormation service", func() {
 				},
 			}
 
-			output, err := newClient(fakeServer.URL).DescribeStacks(
+			output, err := client.DescribeStacks(
 				&cloudformation.DescribeStacksInput{
 					StackName: aws.String("some-stack-name"),
 				})
@@ -161,7 +152,7 @@ var _ = Describe("Mocking out the CloudFormation service", func() {
 				HTTPStatusCode:  http.StatusBadRequest,
 			}
 
-			_, err := newClient(fakeServer.URL).DescribeStacks(
+			_, err := client.DescribeStacks(
 				&cloudformation.DescribeStacksInput{
 					StackName: aws.String("some-stack-name"),
 				})
