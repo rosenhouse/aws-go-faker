@@ -9,7 +9,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
-
 	"github.com/rosenhouse/aws-go-faker"
 
 	. "github.com/onsi/ginkgo"
@@ -39,7 +38,7 @@ func (f *FakeCloudFormationBackend) DescribeStacks(input *cloudformation.Describ
 	return f.DescribeStacksCall.ReturnsResult, f.DescribeStacksCall.ReturnsError
 }
 
-var _ = Describe("Mocking out an AWS service over the network", func() {
+var _ = Describe("Mocking out the CloudFormation service", func() {
 	newClient := func(endpointBaseURL string) *cloudformation.CloudFormation {
 		credentials := credentials.NewStaticCredentials("some-access-key", "some-secret-key", "")
 		sdkConfig := &aws.Config{
@@ -58,7 +57,7 @@ var _ = Describe("Mocking out an AWS service over the network", func() {
 
 	BeforeEach(func() {
 		fakeBackend = &FakeCloudFormationBackend{}
-		fakeHandler = awsfaker.New(fakeBackend)
+		fakeHandler = awsfaker.New(awsfaker.Backend{CloudFormation: fakeBackend})
 		fakeServer = httptest.NewServer(fakeHandler)
 	})
 	AfterEach(func() {
@@ -156,9 +155,9 @@ var _ = Describe("Mocking out an AWS service over the network", func() {
 	Context("when the backend returns an error", func() {
 		It("should return the error in a format that is parsable by the client library", func() {
 			fakeBackend.DescribeStacksCall.ReturnsError = &awsfaker.ErrorResponse{
-				Code:       "ValidationError",
-				Message:    "some error message",
-				StatusCode: http.StatusBadRequest,
+				AWSErrorCode:    "ValidationError",
+				AWSErrorMessage: "some error message",
+				HTTPStatusCode:  http.StatusBadRequest,
 			}
 
 			_, err := newClient(fakeServer.URL).DescribeStacks(

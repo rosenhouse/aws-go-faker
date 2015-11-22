@@ -1,97 +1,46 @@
 package awsfaker
 
 import (
-	"bytes"
-	"encoding/xml"
 	"fmt"
-	"io/ioutil"
 	"net/http"
-	"net/url"
 	"reflect"
-
-	"github.com/aws/aws-sdk-go/private/protocol/xml/xmlutil"
-	"github.com/rosenhouse/aws-go-faker/queryutil"
 )
 
-type FakeHandler struct {
-	backend interface{}
+type Backend struct {
+	CloudFormation interface{}
+	EC2            interface{}
 }
 
-func New(backend interface{}) *FakeHandler {
+type FakeHandler struct {
+	Backend Backend
+}
+
+func New(backend Backend) *FakeHandler {
 	return &FakeHandler{backend}
 }
 
 type ErrorResponse struct {
-	XMLName    xml.Name `xml:"ErrorResponse"`
-	Code       string   `xml:"Error>Code"`
-	Message    string   `xml:"Error>Message"`
-	RequestID  string   `xml:"RequestId"`
-	StatusCode int      `xml:"-"`
+	AWSErrorCode    string
+	AWSErrorMessage string
+	HTTPStatusCode  int
 }
 
-func (e *ErrorResponse) Error() string { return fmt.Sprintf("you shouldn't see this msg") }
-
-func writeResponse(w http.ResponseWriter, statusCode int, action string, data interface{}) {
-	responseBuffer := &bytes.Buffer{}
-	encoder := xml.NewEncoder(responseBuffer)
-	resultWrapper := xml.StartElement{Name: xml.Name{Local: action + "Result"}}
-	err := encoder.EncodeToken(resultWrapper)
-	if err != nil {
-		panic(err)
-	}
-	err = xmlutil.BuildXML(data, encoder)
-	if err != nil {
-		panic(err)
-	}
-	err = encoder.EncodeToken(resultWrapper.End())
-	if err != nil {
-		panic(err)
-	}
-	err = encoder.Flush()
-	if err != nil {
-		panic(err)
-	}
-
-	w.WriteHeader(statusCode)
-	_, err = w.Write(responseBuffer.Bytes())
-	if err != nil {
-		panic(err)
-	}
+func (e *ErrorResponse) Error() string {
+	return fmt.Sprintf("%T: %+v", e, *e)
 }
 
-func writeError(w http.ResponseWriter, errorResponse *ErrorResponse) {
-	responseBodyBytes, err := xml.Marshal(errorResponse)
-	if err != nil {
-		panic(err)
+func (f *FakeHandler) findMethod(actionName string) (reflect.Value, error) {
+	for _, iface := range []interface{}{f.Backend.CloudFormation, f.Backend.EC2} {
+		ifaceValue := reflect.ValueOf(iface)
+		if !ifaceValue.IsValid() {
+			continue
+		}
+		method := ifaceValue.MethodByName(actionName)
+		if method.Kind() == reflect.Func {
+			return method, nil
+		}
 	}
-
-	w.WriteHeader(errorResponse.StatusCode)
-	_, err = w.Write(responseBodyBytes)
-	if err != nil {
-		panic(err)
-	}
-}
-
-func parseQueryRequest(r *http.Request) (url.Values, error) {
-	requestBodyBytes, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return nil, fmt.Errorf("unable to read request body: %s", err)
-	}
-	r.Body = ioutil.NopCloser(bytes.NewReader(requestBodyBytes))
-
-	values, err := url.ParseQuery(string(requestBodyBytes))
-	if err != nil {
-		return nil, fmt.Errorf("unable to parse request body as query syntax: %s", err)
-	}
-
-	return values, err
-}
-
-func constructInput(method reflect.Value, queryValues url.Values) (interface{}, error) {
-	inputValueType := method.Type().In(0).Elem()
-	inputValue := reflect.New(inputValueType).Interface()
-	queryutil.Decode(queryValues, inputValue, false)
-	return inputValue, nil
+	return reflect.Value{}, fmt.Errorf("action %s not found, check that you've fully implemented your fake backend", actionName)
 }
 
 func (f *FakeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -100,9 +49,9 @@ func (f *FakeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 	methodName := queryValues.Get("Action")
-	method := reflect.ValueOf(f.backend).MethodByName(methodName)
-	if method.Kind() != reflect.Func {
-		panic("missing method: " + methodName)
+	method, err := f.findMethod(methodName)
+	if err != nil {
+		panic(err)
 	}
 
 	input, err := constructInput(method, queryValues)
@@ -114,7 +63,8 @@ func (f *FakeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	errVal := results[1].Interface()
 	if errVal != nil {
 		errorResponse := errVal.(*ErrorResponse)
-		writeError(w, errorResponse)
+		err := specializeErrorResponse(method, errorResponse)
+		writeError(w, errorResponse.HTTPStatusCode, err)
 		return
 	}
 
