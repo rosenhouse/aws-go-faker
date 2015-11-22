@@ -24,6 +24,16 @@ type FakeCloudFormationBackend struct {
 		ReturnsResult *cloudformation.DescribeStacksOutput
 		ReturnsError  error
 	}
+	UpdateStackCall struct {
+		Receives      *cloudformation.UpdateStackInput
+		ReturnsResult *cloudformation.UpdateStackOutput
+		ReturnsError  error
+	}
+}
+
+func (f *FakeCloudFormationBackend) UpdateStack(input *cloudformation.UpdateStackInput) (*cloudformation.UpdateStackOutput, error) {
+	f.UpdateStackCall.Receives = input
+	return f.UpdateStackCall.ReturnsResult, f.UpdateStackCall.ReturnsError
 }
 
 func (f *FakeCloudFormationBackend) DescribeStacks(input *cloudformation.DescribeStacksInput) (*cloudformation.DescribeStacksOutput, error) {
@@ -44,18 +54,54 @@ var _ = Describe("Mocking out an AWS service over the network", func() {
 
 	var (
 		fakeBackend *FakeCloudFormationBackend
-		faker       *awsfaker.Faker
+		fake        *awsfaker.Fake
+		fakeServer  *httptest.Server
 	)
 
 	BeforeEach(func() {
 		fakeBackend = &FakeCloudFormationBackend{}
-		faker = &awsfaker.Faker{}
+		fake = awsfaker.New(fakeBackend)
+		fakeServer = httptest.NewServer(fake)
+	})
+	AfterEach(func() {
+		if fakeServer != nil {
+			fakeServer.Close()
+		}
+	})
+
+	It("should properly parse nested structs in the input", func() {
+		newClient(fakeServer.URL).UpdateStack(
+			&cloudformation.UpdateStackInput{
+				StackName: aws.String("some-stack-name"),
+				Parameters: []*cloudformation.Parameter{
+					&cloudformation.Parameter{
+						ParameterKey:   aws.String("some-key-0"),
+						ParameterValue: aws.String("some-value-0"),
+					},
+					&cloudformation.Parameter{
+						ParameterKey:   aws.String("some-key-1"),
+						ParameterValue: aws.String("some-value-1"),
+					},
+				},
+			})
+
+		Expect(fakeBackend.UpdateStackCall.Receives).NotTo(BeNil())
+		Expect(fakeBackend.UpdateStackCall.Receives.StackName).To(Equal(aws.String("some-stack-name")))
+		Expect(fakeBackend.UpdateStackCall.Receives.Parameters).To(Equal(
+			[]*cloudformation.Parameter{
+				&cloudformation.Parameter{
+					ParameterKey:   aws.String("some-key-0"),
+					ParameterValue: aws.String("some-value-0"),
+				},
+				&cloudformation.Parameter{
+					ParameterKey:   aws.String("some-key-1"),
+					ParameterValue: aws.String("some-value-1"),
+				},
+			},
+		))
 	})
 
 	It("should call the backend method", func() {
-		fakeServer := httptest.NewServer(faker.Handler(fakeBackend))
-		defer fakeServer.Close()
-
 		newClient(fakeServer.URL).DescribeStacks(
 			&cloudformation.DescribeStacksInput{
 				StackName: aws.String("some-stack-name"),
@@ -83,9 +129,6 @@ var _ = Describe("Mocking out an AWS service over the network", func() {
 					},
 				},
 			}
-
-			fakeServer := httptest.NewServer(faker.Handler(fakeBackend))
-			defer fakeServer.Close()
 
 			output, err := newClient(fakeServer.URL).DescribeStacks(
 				&cloudformation.DescribeStacksInput{
@@ -120,9 +163,6 @@ var _ = Describe("Mocking out an AWS service over the network", func() {
 				StatusCode: http.StatusBadRequest,
 			}
 
-			fakeServer := httptest.NewServer(faker.Handler(fakeBackend))
-			defer fakeServer.Close()
-
 			_, err := newClient(fakeServer.URL).DescribeStacks(
 				&cloudformation.DescribeStacksInput{
 					StackName: aws.String("some-stack-name"),
@@ -152,8 +192,6 @@ var _ = Describe("inner functions", func() {
 			Expect(expectedInput).To(Equal(&cloudformation.DescribeStacksInput{
 				StackName: aws.String("some-stack-name"),
 			}))
-
 		})
 	})
-
 })
