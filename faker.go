@@ -12,7 +12,7 @@ type Backend struct {
 }
 
 type FakeHandler struct {
-	Backend Backend
+	backend Backend
 }
 
 func New(backend Backend) *FakeHandler {
@@ -30,7 +30,7 @@ func (e *ErrorResponse) Error() string {
 }
 
 func (f *FakeHandler) findMethod(actionName string) (reflect.Value, error) {
-	for _, iface := range []interface{}{f.Backend.CloudFormation, f.Backend.EC2} {
+	for _, iface := range []interface{}{f.backend.CloudFormation, f.backend.EC2} {
 		ifaceValue := reflect.ValueOf(iface)
 		if !ifaceValue.IsValid() {
 			continue
