@@ -68,7 +68,7 @@ var _ = Describe("Mocking out the EC2 service", func() {
 
 			output, err := client.CreateKeyPair(
 				&ec2.CreateKeyPairInput{
-					KeyName: aws.String("some-stack-name"),
+					KeyName: aws.String("some-key-name"),
 				})
 
 			Expect(err).NotTo(HaveOccurred())
@@ -90,7 +90,7 @@ var _ = Describe("Mocking out the EC2 service", func() {
 
 			_, err := client.CreateKeyPair(
 				&ec2.CreateKeyPairInput{
-					KeyName: aws.String("some-stack-name"),
+					KeyName: aws.String("some-key-name"),
 				})
 
 			Expect(err).To(HaveOccurred())
