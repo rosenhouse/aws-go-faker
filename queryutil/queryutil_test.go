@@ -8,7 +8,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/rosenhouse/aws-go-faker/queryutil"
+	"github.com/rosenhouse/awsfaker/queryutil"
 )
 
 type dataObject struct {

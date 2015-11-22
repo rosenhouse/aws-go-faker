@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go/private/protocol/xml/xmlutil"
-	"github.com/rosenhouse/aws-go-faker/queryutil"
+	"github.com/rosenhouse/awsfaker/queryutil"
 )
 
 func writeResponse(w http.ResponseWriter, statusCode int, action string, data interface{}) {

@@ -1,2 +1,2 @@
-# aws-go-faker
-A Go library for faking AWS
+# awsfaker
+A Go library for faking AWS over the network
