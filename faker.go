@@ -87,7 +87,7 @@ func parseQueryRequest(r *http.Request) (url.Values, error) {
 	return values, err
 }
 
-func ConstructInput(method reflect.Value, queryValues url.Values) (interface{}, error) {
+func constructInput(method reflect.Value, queryValues url.Values) (interface{}, error) {
 	inputValueType := method.Type().In(0).Elem()
 	inputValue := reflect.New(inputValueType).Interface()
 	queryutil.Decode(queryValues, inputValue, false)
@@ -105,7 +105,7 @@ func (f *Fake) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		panic("missing method: " + methodName)
 	}
 
-	input, err := ConstructInput(method, queryValues)
+	input, err := constructInput(method, queryValues)
 	if err != nil {
 		panic(err)
 	}

@@ -3,8 +3,6 @@ package awsfaker_test
 import (
 	"net/http"
 	"net/http/httptest"
-	"net/url"
-	"reflect"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -175,23 +173,5 @@ var _ = Describe("Mocking out an AWS service over the network", func() {
 			Expect(awsErr.Message()).To(Equal("some error message"))
 		})
 
-	})
-})
-
-var _ = Describe("inner functions", func() {
-	Describe("ConstructInput", func() {
-		It("should return a value of the correct type", func() {
-			fakeBackend := &FakeCloudFormationBackend{}
-
-			method := reflect.ValueOf(fakeBackend).MethodByName("DescribeStacks")
-
-			queryValues, _ := url.ParseQuery("Action=DescribeStacks&StackName=some-stack-name&Version=2010-05-15")
-			expectedInput, err := awsfaker.ConstructInput(method, queryValues)
-			Expect(err).NotTo(HaveOccurred())
-
-			Expect(expectedInput).To(Equal(&cloudformation.DescribeStacksInput{
-				StackName: aws.String("some-stack-name"),
-			}))
-		})
 	})
 })
