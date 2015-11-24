@@ -47,7 +47,7 @@ var _ = Describe("Mocking out the CloudFormation service", func() {
 
 	BeforeEach(func() {
 		fakeBackend = &FakeCloudFormationBackend{}
-		fakeHandler = awsfaker.New(awsfaker.Backend{CloudFormation: fakeBackend})
+		fakeHandler = awsfaker.New(&awsfaker.Backend{CloudFormation: fakeBackend})
 		fakeServer = httptest.NewServer(fakeHandler)
 		client = cloudformation.New(newSession(fakeServer.URL))
 	})

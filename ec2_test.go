@@ -37,7 +37,7 @@ var _ = Describe("Mocking out the EC2 service", func() {
 
 	BeforeEach(func() {
 		fakeBackend = &FakeEC2Backend{}
-		fakeHandler = awsfaker.New(awsfaker.Backend{EC2: fakeBackend})
+		fakeHandler = awsfaker.New(&awsfaker.Backend{EC2: fakeBackend})
 		fakeServer = httptest.NewServer(fakeHandler)
 		client = ec2.New(newSession(fakeServer.URL))
 	})

@@ -12,10 +12,10 @@ type Backend struct {
 }
 
 type FakeHandler struct {
-	backend Backend
+	backend *Backend
 }
 
-func New(backend Backend) *FakeHandler {
+func New(backend *Backend) *FakeHandler {
 	return &FakeHandler{backend}
 }
 
