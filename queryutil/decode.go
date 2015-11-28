@@ -139,7 +139,7 @@ func (q *queryDecoder) decodeList(output reflect.Value, prefix string, tag refle
 	if !q.isEC2 && tag.Get("flattened") == "" {
 		prefix += ".member"
 	}
-	namer := NewElementNamer(prefix)
+	namer := newElementNamer(prefix)
 
 	for i := 0; ; i++ {
 		elementPrefix := namer.Name(i)
@@ -162,7 +162,7 @@ func (q *queryDecoder) decodeMap(output reflect.Value, prefix string, tag reflec
 	if !q.isEC2 && tag.Get("flattened") == "" {
 		prefix += ".entry"
 	}
-	namer := NewMapNamer(prefix, tag)
+	namer := newMapNamer(prefix, tag)
 
 	mapType := output.Type()
 	output.Set(reflect.MakeMap(mapType))
@@ -203,32 +203,32 @@ func (q *queryDecoder) decodeScalar(output reflect.Value, name string) error {
 	case []byte:
 		decoded, err := base64.StdEncoding.DecodeString(encodedValue)
 		if err != nil {
-			return &DecodeError{Field: name, Value: encodedValue, Inner: err}
+			return &decodeError{Field: name, Value: encodedValue, Inner: err}
 		}
 		output.SetBytes(decoded)
 	case bool:
 		value, err := strconv.ParseBool(encodedValue)
 		if err != nil {
-			return &DecodeError{Field: name, Value: encodedValue, Inner: err}
+			return &decodeError{Field: name, Value: encodedValue, Inner: err}
 		}
 		output.SetBool(value)
 	case int64, int, int32:
 		value, err := strconv.ParseInt(encodedValue, 10, 64)
 		if err != nil {
-			return &DecodeError{Field: name, Value: encodedValue, Inner: err}
+			return &decodeError{Field: name, Value: encodedValue, Inner: err}
 		}
 		output.SetInt(value)
 	case float64, float32:
 		value, err := strconv.ParseFloat(encodedValue, 64)
 		if err != nil {
-			return &DecodeError{Field: name, Value: encodedValue, Inner: err}
+			return &decodeError{Field: name, Value: encodedValue, Inner: err}
 		}
 		output.SetFloat(value)
 	case time.Time:
 		const ISO8601UTC = "2006-01-02T15:04:05Z"
 		value, err := time.Parse(ISO8601UTC, encodedValue)
 		if err != nil {
-			return &DecodeError{Field: name, Value: encodedValue, Inner: err}
+			return &decodeError{Field: name, Value: encodedValue, Inner: err}
 		}
 		output.Set(reflect.ValueOf(value.UTC()))
 	default:

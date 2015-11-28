@@ -9,7 +9,7 @@ type elementNamer struct {
 	prefix string
 }
 
-func NewElementNamer(prefix string) elementNamer {
+func newElementNamer(prefix string) elementNamer {
 	return elementNamer{prefix: prefix}
 }
 
@@ -38,7 +38,7 @@ func (n mapNamer) ValueName(i int) string {
 	return n.name(i, n.vname)
 }
 
-func NewMapNamer(prefix string, tag reflect.StructTag) mapNamer {
+func newMapNamer(prefix string, tag reflect.StructTag) mapNamer {
 	kname := tag.Get("locationNameKey")
 	if kname == "" {
 		kname = "key"
@@ -47,5 +47,5 @@ func NewMapNamer(prefix string, tag reflect.StructTag) mapNamer {
 	if vname == "" {
 		vname = "value"
 	}
-	return mapNamer{kname: kname, vname: vname, elementNamer: NewElementNamer(prefix)}
+	return mapNamer{kname: kname, vname: vname, elementNamer: newElementNamer(prefix)}
 }
