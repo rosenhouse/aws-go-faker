@@ -57,7 +57,6 @@ func Example() {
 		StackName: aws.String("some-stack"),
 	})
 	fmt.Printf("[Client] CreateStack returned error:\n %s\n", err)
-
 	// Output:
 	// [Server] CreateStack called on "some-stack"
 	// [Client] CreateStack returned ID: "some-id"
