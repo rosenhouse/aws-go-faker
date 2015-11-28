@@ -6,17 +6,37 @@ import (
 	"reflect"
 )
 
-type Backend struct {
-	CloudFormation interface{}
-	EC2            interface{}
-}
-
 type FakeHandler struct {
-	backend *Backend
+	actions map[string]reflect.Value
 }
 
-func New(backend *Backend) *FakeHandler {
-	return &FakeHandler{backend}
+func (h *FakeHandler) registerService(awsService interface{}) {
+	service := reflect.ValueOf(awsService)
+	if !service.IsValid() {
+		panic("invalid service interface")
+	}
+	if service.Kind() != reflect.Ptr {
+		panic("expecting struct pointer as service interface")
+	}
+	if !service.Elem().IsValid() {
+		panic("expectingn non-nil pointer as service interface")
+	}
+	serviceType := service.Type()
+	n := service.NumMethod()
+	if n == 0 {
+		panic("no methods on service interface")
+	}
+	for i := 0; i < n; i++ {
+		h.actions[serviceType.Method(i).Name] = service.Method(i)
+	}
+}
+
+func New(serviceBackends ...interface{}) *FakeHandler {
+	handler := &FakeHandler{make(map[string]reflect.Value)}
+	for _, backend := range serviceBackends {
+		handler.registerService(backend)
+	}
+	return handler
 }
 
 type ErrorResponse struct {
@@ -30,17 +50,11 @@ func (e *ErrorResponse) Error() string {
 }
 
 func (f *FakeHandler) findMethod(actionName string) (reflect.Value, error) {
-	for _, iface := range []interface{}{f.backend.CloudFormation, f.backend.EC2} {
-		ifaceValue := reflect.ValueOf(iface)
-		if !ifaceValue.IsValid() {
-			continue
-		}
-		method := ifaceValue.MethodByName(actionName)
-		if method.Kind() == reflect.Func {
-			return method, nil
-		}
+	method, ok := f.actions[actionName]
+	if !ok {
+		return reflect.Value{}, fmt.Errorf("action %s not found, check that you've fully implemented your fake backend", actionName)
 	}
-	return reflect.Value{}, fmt.Errorf("action %s not found, check that you've fully implemented your fake backend", actionName)
+	return method, nil
 }
 
 func (f *FakeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {

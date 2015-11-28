@@ -30,15 +30,13 @@ func (f *FakeEC2Backend) CreateKeyPair(input *ec2.CreateKeyPairInput) (*ec2.Crea
 var _ = Describe("Mocking out the EC2 service", func() {
 	var (
 		fakeBackend *FakeEC2Backend
-		fakeHandler *awsfaker.FakeHandler
 		fakeServer  *httptest.Server
 		client      *ec2.EC2
 	)
 
 	BeforeEach(func() {
 		fakeBackend = &FakeEC2Backend{}
-		fakeHandler = awsfaker.New(&awsfaker.Backend{EC2: fakeBackend})
-		fakeServer = httptest.NewServer(fakeHandler)
+		fakeServer = httptest.NewServer(awsfaker.New(fakeBackend))
 		client = ec2.New(newSession(fakeServer.URL))
 	})
 
