@@ -1,5 +1,11 @@
-// package queryutil supports encoding and decoding between Go structs and the AWS query protocol
-// it is modified from the encoder at github.com/aws/aws-sdk-go/private/protocol/query/queryutil/
+// Package queryutil supports encoding and decoding between Go structs and the
+// AWS query protocol.
+//
+// The query protocol is used by many AWS APIs, including CloudFormation,
+// IAM, and RDS.  This package also supports the variant used by EC2.
+//
+// The encoder is copied from github.com/aws/aws-sdk-go/private/protocol/query/queryutil/
+// and the decoder is based on that as well.
 package queryutil
 
 import (
@@ -12,10 +18,10 @@ import (
 	"time"
 )
 
-// Decode decodes an a url.Values object into an object output. The isEC2 flag
+// Decode decodes from url.Values into an output object. The isEC2 flag
 // indicates if this is the EC2 Query sub-protocol.
-func Decode(body url.Values, output interface{}, isEC2 bool) error {
-	q := queryDecoder{isEC2: isEC2, encoded: body}
+func Decode(encoded url.Values, output interface{}, isEC2 bool) error {
+	q := queryDecoder{isEC2: isEC2, encoded: encoded}
 	return q.decodeValue(reflect.ValueOf(output), "", "")
 }
 

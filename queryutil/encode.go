@@ -11,11 +11,11 @@ import (
 	"time"
 )
 
-// Encode encodes an object i into a url.Values object. The isEC2 flag
+// Encode encodes an input object into a url.Values output. The isEC2 flag
 // indicates if this is the EC2 Query sub-protocol.
-func Encode(body url.Values, i interface{}, isEC2 bool) error {
+func Encode(output url.Values, input interface{}, isEC2 bool) error {
 	q := queryEncoder{isEC2: isEC2}
-	return q.encodeValue(body, reflect.ValueOf(i), "", "")
+	return q.encodeValue(output, reflect.ValueOf(input), "", "")
 }
 
 func elemOf(value reflect.Value) reflect.Value {
