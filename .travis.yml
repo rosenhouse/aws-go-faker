@@ -6,6 +6,7 @@ go:
 
 install:
   - go get -v ./...
+  - go get -v github.com/aws/aws-sdk-go/...
   - go get github.com/onsi/gomega
   - go get github.com/onsi/ginkgo
   - go install github.com/onsi/ginkgo/ginkgo
