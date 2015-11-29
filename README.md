@@ -37,3 +37,17 @@ This package provides a generic HTTP handler that can form the front-end of a te
 The method signatures expected on the backends match the patterns of [aws-sdk-go](https://github.com/aws/aws-sdk-go).  For example, a complete implementation of AWS CloudFormation would match the [CloudFormationAPI interface](https://github.com/aws/aws-sdk-go/blob/master/service/cloudformation/cloudformationiface/interface.go)
 
 But your backend need only implement those methods used by your code under test.
+
+### API Support
+AWS APIs do not all use the same encoding scheme.  For example, EC2 expects POST requests with query-encoded data in the request body, while S3 uses an XML format.  A checkmark below indicates that a scheme and its services work with `awsfaker`:
+
+- [x] *ec2query*: `ec2`
+
+- [ ] *jsonrpc*: `cloudhsm`, `cloudtrail`, `cloudwatchlogs`, `codecommit`, `codedeploy`, `codepipeline`, `cognitoidentity`, `configservice`, `datapipeline`, `devicefarm`, `directconnect`, `directoryservice`, `dynamodb`, `dynamodbstreams`, `ecs`, `emr`, `firehose`, `inspector`, `kinesis`, `kms`, `machinelearning`, `marketplacecommerceanalytics`, `opsworks`, `route53domains`, `ssm`, `storagegateway`, `support`, `swf`, `waf`, `workspaces`
+
+- [x] *query*: `autoscaling`, `cloudformation`, `cloudsearch`, `cloudwatch`, `elasticache`, `elasticbeanstalk`, `elb`, `iam`, `rds`, `redshift`, `ses`, `simpledb`, `sns`, `sqs`, `sts`
+
+- [ ] *restjson*: `apigateway`, `cloudsearchdomain`, `cognitosync`, `efs`, `elasticsearchservice`, `elastictranscoder`, `glacier`, `iot`, `iotdataplane`, `lambda`, `mobileanalytics`
+
+- [ ] *restxml*: `cloudfront`, `route53`, `s3`
+
