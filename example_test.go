@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
 
@@ -44,16 +45,20 @@ func Example() {
 	// configure and use your client.  this might be a separate process,
 	// with the endpoint override set via environment variable or other config
 	client := cloudformation.New(session.New(&aws.Config{
-		Region:   aws.String("some-region"),
-		Endpoint: aws.String(fakeServer.URL), // override the default AWS endpoint
+		Credentials: credentials.NewStaticCredentials("some-access-key", "some-secret-key", ""),
+		Region:      aws.String("some-region"),
+		Endpoint:    aws.String(fakeServer.URL), // override the default AWS endpoint
 	}))
 
-	out, _ := client.CreateStack(&cloudformation.CreateStackInput{
+	out, err := client.CreateStack(&cloudformation.CreateStackInput{
 		StackName: aws.String("some-stack"),
 	})
+	if err != nil {
+		panic(err)
+	}
 	fmt.Printf("[Client] CreateStack returned ID: %q\n", *out.StackId)
 
-	_, err := client.CreateStack(&cloudformation.CreateStackInput{
+	_, err = client.CreateStack(&cloudformation.CreateStackInput{
 		StackName: aws.String("some-stack"),
 	})
 	fmt.Printf("[Client] CreateStack returned error:\n %s\n", err)
