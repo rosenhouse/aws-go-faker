@@ -1,4 +1,4 @@
-package awsfaker_test
+package services_test
 
 import (
 	"math/rand"
@@ -7,16 +7,15 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-
 	"github.com/onsi/ginkgo/config"
+	. "github.com/onsi/gomega"
 
 	"testing"
 )
 
-func TestAwsFaker(t *testing.T) {
+func TestServices(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "AwsFaker Suite")
+	RunSpecs(t, "Services Suite")
 }
 
 var _ = BeforeSuite(func() {

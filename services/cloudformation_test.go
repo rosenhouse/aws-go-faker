@@ -1,4 +1,4 @@
-package awsfaker_test
+package services_test
 
 import (
 	"net/http"
