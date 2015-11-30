@@ -26,11 +26,12 @@ import (
 	"github.com/rosenhouse/awsfaker/protocols/query"
 )
 
-// New returns a new FakeHandler that will dispatch incoming requests to
-// the given service backend.
+// New returns a new http.Handler that will dispatch incoming requests to
+// the given service backend, decoding requests and encoding responses in the
+// format used by that service.
 //
-// A service backend should represent one AWS service, e.g. EC2
-// A backend should implement some or all of the actions of the service.
+// A backend should represent one AWS service, e.g. EC2, and implement the subset
+// of API actions required by the code under test.
 // The methods on the backend should have signatures like
 //	func (b *MyBackend) SomeAction(input *service.SomeActionInput) (*service.SomeActionOutput, error)
 // where the input and output types are those in github.com/aws/aws-sdk-go
@@ -41,7 +42,7 @@ func New(serviceBackend interface{}) http.Handler {
 
 // An ErrorResponse represents an error from a backend method
 //
-// If a backend method returns an instance of ErrorResponse, then ServeHTTP
+// If a backend method returns an instance of ErrorResponse, then the handler
 // will respond with the given HTTPStatusCode and marshal the AWSErrorCode and
 // AWSErrorMessage fields appropriately in the HTTP response body.
 type ErrorResponse struct {
