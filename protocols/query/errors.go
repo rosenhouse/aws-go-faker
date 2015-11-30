@@ -1,11 +1,11 @@
-package awsfaker
+package query
 
 import (
 	"encoding/xml"
 	"reflect"
 )
 
-type cloudFormationErrorResponse struct {
+type queryErrorResponse struct {
 	XMLName   xml.Name `xml:"ErrorResponse"`
 	Code      string   `xml:"Error>Code"`
 	Message   string   `xml:"Error>Message"`
@@ -19,16 +19,22 @@ type ec2ErrorResponse struct {
 	RequestID string   `xml:"RequestId"`
 }
 
-func specializeErrorResponse(method reflect.Value, err *ErrorResponse) interface{} {
+type errorResponse interface {
+	HTTPStatus() int
+	AWSCode() string
+	AWSMessage() string
+}
+
+func specializeErrorResponse(method reflect.Value, err errorResponse) interface{} {
 	if methodIsEC2(method) {
 		return ec2ErrorResponse{
-			Code:    err.AWSErrorCode,
-			Message: err.AWSErrorMessage,
+			Code:    err.AWSCode(),
+			Message: err.AWSMessage(),
 		}
 	} else {
-		return cloudFormationErrorResponse{
-			Code:    err.AWSErrorCode,
-			Message: err.AWSErrorMessage,
+		return queryErrorResponse{
+			Code:    err.AWSCode(),
+			Message: err.AWSMessage(),
 		}
 	}
 }

@@ -9,5 +9,5 @@ import (
 
 func TestQueryutil(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Queryutil Suite")
+	RunSpecs(t, "QueryUtil Suite")
 }

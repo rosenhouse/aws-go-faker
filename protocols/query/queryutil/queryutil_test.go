@@ -4,11 +4,11 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/rosenhouse/awsfaker/queryutil"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/rosenhouse/awsfaker/protocols/query/queryutil"
 )
 
 type dataObject struct {
