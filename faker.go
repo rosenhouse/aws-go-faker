@@ -53,7 +53,3 @@ type ErrorResponse struct {
 func (e *ErrorResponse) Error() string {
 	return fmt.Sprintf("%T: %+v", e, *e)
 }
-
-func (e *ErrorResponse) HTTPStatus() int    { return e.HTTPStatusCode }
-func (e *ErrorResponse) AWSCode() string    { return e.AWSErrorCode }
-func (e *ErrorResponse) AWSMessage() string { return e.AWSErrorMessage }

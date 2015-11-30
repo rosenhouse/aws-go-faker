@@ -77,9 +77,9 @@ func (f *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	results := method.Call([]reflect.Value{reflect.ValueOf(input)})
 	errVal := results[1].Interface()
 	if errVal != nil {
-		errorResponse := errVal.(errorResponse)
+		errorResponse := errVal.(error)
 		err := specializeErrorResponse(method, errorResponse)
-		writeError(w, errorResponse.HTTPStatus(), err)
+		writeError(w, err)
 		return
 	}
 
@@ -118,13 +118,13 @@ func writeResponse(w http.ResponseWriter, statusCode int, action string, data in
 	}
 }
 
-func writeError(w http.ResponseWriter, httpStatusCode int, errorResponse interface{}) {
+func writeError(w http.ResponseWriter, errorResponse withHTTPCode) {
 	responseBodyBytes, err := xml.Marshal(errorResponse)
 	if err != nil {
 		panic(err)
 	}
 
-	w.WriteHeader(httpStatusCode)
+	w.WriteHeader(errorResponse.HTTPStatusCode())
 	_, err = w.Write(responseBodyBytes)
 	if err != nil {
 		panic(err)
