@@ -28,7 +28,7 @@ func (f *FakeS3Backend) PutObject(input *s3.PutObjectInput) (*s3.PutObjectOutput
 	return f.PutObjectCall.ReturnsResult, f.PutObjectCall.ReturnsError
 }
 
-var _ = XDescribe("Mocking out the S3 service", func() {
+var _ = Describe("Mocking out the S3 service", func() {
 	var (
 		fakeBackend *FakeS3Backend
 		fakeServer  *httptest.Server

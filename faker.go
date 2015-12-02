@@ -23,7 +23,9 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/rosenhouse/awsfaker/internal/detect"
 	"github.com/rosenhouse/awsfaker/protocols/query"
+	"github.com/rosenhouse/awsfaker/protocols/restxml"
 )
 
 // New returns a new http.Handler that will dispatch incoming requests to
@@ -37,7 +39,22 @@ import (
 // where the input and output types are those in github.com/aws/aws-sdk-go
 // When returning an error from a backend method, use the ErrorResponse type.
 func New(serviceBackend interface{}) http.Handler {
-	return query.New(serviceBackend)
+	serviceName, err := detect.GetServiceName(serviceBackend)
+	if err != nil {
+		panic(err)
+	}
+
+	protocol, ok := detect.ProtocolForService[serviceName]
+	if !ok {
+		panic(err)
+	}
+
+	switch protocol {
+	case "restxml":
+		return restxml.New(serviceBackend)
+	default:
+		return query.New(serviceBackend)
+	}
 }
 
 // An ErrorResponse represents an error from a backend method
